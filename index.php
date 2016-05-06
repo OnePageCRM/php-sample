@@ -18,18 +18,18 @@ function make_api_call($url, $http_method, $post_data = array(), $uid = null, $k
 	$auth_data = array($uid, $timestamp, $http_method, sha1($full_url));
     $request_headers = array();
 
-	// For POST and PUT requests we will send data as JSON
+    // For POST and PUT requests we will send data as JSON
     // as with regular "form data" request we won't be able
     // to send more complex structures
-	if($http_method == 'POST' || $http_method == 'PUT'){
+    if($http_method == 'POST' || $http_method == 'PUT'){
         $request_headers[] = 'Content-Type: application/json';
         $json_data = json_encode($post_data);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
         $auth_data[] = sha1($json_data);
     }
 
-	// Set auth headers if we are logged in
-	if($key != null){
+    // Set auth headers if we are logged in
+    if($key != null){
         $hash = hash_hmac('sha256', implode('.', $auth_data), $key);
         $request_headers[] = "X-OnePageCRM-UID: $uid";
         $request_headers[] = "X-OnePageCRM-TS: $timestamp";
@@ -38,15 +38,15 @@ function make_api_call($url, $http_method, $post_data = array(), $uid = null, $k
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
 
-	$result = json_decode(curl_exec($ch));
-	curl_close($ch);
+    $result = json_decode(curl_exec($ch));
+    curl_close($ch);
 
-	if($result->status > 99){
+    if($result->status > 99){
         echo "API call error: {$result->message}\n";
         return null;
     }
 
-	return $result;
+    return $result;
 }
 
 // Login
@@ -59,7 +59,7 @@ if($data == null){
 // Get UID and API key from result
 $uid = $data->data->user_id;
 $key = base64_decode($data->data->auth_key);
-echo "Logged in, our UID is {$uid}\n";
+echo "Logged in, your UID is : {$uid}\n";
 
 // Get contacts list
 echo "Getting contacts list...\n";
@@ -79,8 +79,8 @@ $contact_data = array(
     'emails' => array(
         array('type' => 'work', 'value' => 'john.doe@example.com'),
         array('type' => 'other', 'value' => 'johny@example.com')
-    )
-);
+        )
+    );
 
 $new_contact = make_api_call('contacts.json', 'POST', $contact_data, $uid, $key);
 if($new_contact == null){
@@ -88,9 +88,26 @@ if($new_contact == null){
 }
 
 $cid = $new_contact->data->contact->id;
-echo "Contact created. ID {$cid}\n";
+echo "Contact created with ID : {$cid}\n";
 
-echo "Deleting this contact...";
+// Create an action for this contact
+echo "Creating action for contact...\n";
+$action_data = array(
+    'contact_id' => $cid,
+    'date' => '2016-05-06',
+    'text' => 'Call John with estimate',
+    'status' => 'date'
+    );
+
+$new_action = make_api_call('actions.json', 'POST', $action_data, $uid, $key);
+if($new_action == null){
+    exit;
+}
+
+$aid = $new_action->data->action->id;
+echo "Action created with ID : {$aid}\n";
+
+echo "Deleting this contact...\n";
 make_api_call("contacts/$cid.json", 'DELETE', array(), $uid, $key);
 
-echo "OK.";
+echo "Finished...\n";
