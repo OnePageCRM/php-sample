@@ -75,7 +75,7 @@ $contact_data = array(
     'first_name' => 'Jonh',
     'last_name' => 'Doe',
     'company_name' => 'Acme Inc.',
-    'tags' => 'api_test',
+    'tags' => array('api_test'),
     'emails' => array(
         array('type' => 'work', 'value' => 'john.doe@example.com'),
         array('type' => 'other', 'value' => 'johny@example.com')
